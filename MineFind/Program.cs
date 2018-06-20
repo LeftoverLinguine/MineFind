@@ -111,12 +111,12 @@ namespace MineFind
 
         private static bool IsGameWon(Board board)
         {
-            var xDim = board.BoardOptions.GetLength(0);
-            var yDim = board.BoardOptions.GetLength(1);
+            var xDimension = board.BoardOptions.GetLength(0);
+            var yDimension = board.BoardOptions.GetLength(1);
 
-            for(var x = 0; x < xDim; ++x)
+            for(var x = 0; x < xDimension; ++x)
             {
-                for(var y = 0; y < yDim; ++y)
+                for(var y = 0; y < yDimension; ++y)
                 {
                     if(board.BoardOptions[x, y] == BoardOptions.NoBombCovered)
                         return false;
@@ -128,7 +128,9 @@ namespace MineFind
 
         private static void UncoverNoBombSpots(Board board, int x, int y)
         {
-            /* Uncover all of the covered no bomb spots starting at (x, y), assuming that (x, y) is a NoBombCovered spot. */
+            /* 
+             *  Uncover all of the covered no bomb spots starting at (x, y), assuming that (x, y) is a NoBombCovered spot. 
+             */
             board.BoardOptions[x, y] = BoardOptions.NoBombUncovered;
 
             var maxX = board.BoardOptions.GetLength(0);
