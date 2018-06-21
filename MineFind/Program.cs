@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MineFind
@@ -19,6 +20,11 @@ namespace MineFind
 
     public class Program
     {
+        private static readonly (int x, int y)[] SurroundingPointVectors = new(int x, int y)[8]
+        {
+            (-1, -1), (-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1)
+        };
+
         public static void Main(string[] args)
         {
             var continuePlaying = true;
@@ -131,66 +137,29 @@ namespace MineFind
             /* 
              *  Uncover all of the covered no bomb spots starting at (x, y), assuming that (x, y) is a NoBombCovered spot. 
              */
-            board.BoardOptions[x, y] = BoardOptions.NoBombUncovered;
-
             var maxX = board.BoardOptions.GetLength(0);
             var maxY = board.BoardOptions.GetLength(1);
+            var positionsToCheck = new Queue<(int x, int y)>();
 
-            if(((y - 1) >= 0) && ((x - 1) >= 0) && (board.BoardOptions[x - 1, y - 1] == BoardOptions.NoBombCovered))
+            positionsToCheck.Enqueue((x, y));
+            
+            while(positionsToCheck.Count > 0)
             {
-                if(board.NumberOfSurroundingBombs[x - 1, y - 1] == 0)
-                    UncoverNoBombSpots(board, x - 1, y - 1);
-                else
-                    board.BoardOptions[x - 1, y - 1] = BoardOptions.NoBombUncovered;
-            }
-            if(((y - 1) >= 0) && (board.BoardOptions[x, y - 1] == BoardOptions.NoBombCovered))
-            {
-                if(board.NumberOfSurroundingBombs[x, y - 1] == 0)
-                    UncoverNoBombSpots(board, x, y - 1);
-                else
-                    board.BoardOptions[x, y - 1] = BoardOptions.NoBombUncovered;
-            }
-            if(((y - 1) >= 0) && ((x + 1) < maxX) && (board.BoardOptions[x + 1, y - 1] == BoardOptions.NoBombCovered))
-            {
-                if(board.NumberOfSurroundingBombs[x + 1, y - 1] == 0)
-                    UncoverNoBombSpots(board, x + 1, y - 1);
-                else
-                    board.BoardOptions[x + 1, y - 1] = BoardOptions.NoBombUncovered;
-            }
-            if(((x + 1) < maxX) && (board.BoardOptions[x + 1, y] == BoardOptions.NoBombCovered))
-            {
-                if(board.NumberOfSurroundingBombs[x + 1, y] == 0)
-                    UncoverNoBombSpots(board, x + 1, y);
-                else
-                    board.BoardOptions[x + 1, y] = BoardOptions.NoBombUncovered;
-            }
-            if(((y + 1) < maxY) && ((x + 1) < maxX) && (board.BoardOptions[x + 1, y + 1] == BoardOptions.NoBombCovered))
-            {
-                if(board.NumberOfSurroundingBombs[x + 1, y + 1] == 0)
-                    UncoverNoBombSpots(board, x + 1, y + 1);
-                else
-                    board.BoardOptions[x + 1, y + 1] = BoardOptions.NoBombUncovered;
-            }
-            if(((y + 1) < maxY) && (board.BoardOptions[x, y + 1] == BoardOptions.NoBombCovered))
-            {
-                if(board.NumberOfSurroundingBombs[x, y + 1] == 0)
-                    UncoverNoBombSpots(board, x, y + 1);
-                else
-                    board.BoardOptions[x, y + 1] = BoardOptions.NoBombUncovered;
-            }
-            if(((y + 1) < maxY) && ((x - 1) >= 0) && (board.BoardOptions[x - 1, y + 1] == BoardOptions.NoBombCovered))
-            {
-                if(board.NumberOfSurroundingBombs[x - 1, y + 1] == 0)
-                    UncoverNoBombSpots(board, x - 1, y + 1);
-                else
-                    board.BoardOptions[x - 1, y + 1] = BoardOptions.NoBombUncovered;
-            }
-            if(((x - 1) >= 0) && (board.BoardOptions[x - 1, y] == BoardOptions.NoBombCovered))
-            {
-                if(board.NumberOfSurroundingBombs[x - 1, y] == 0)
-                    UncoverNoBombSpots(board, x - 1, y);
-                else
-                    board.BoardOptions[x - 1, y] = BoardOptions.NoBombUncovered;
+                (x, y) = positionsToCheck.Dequeue();
+                board.BoardOptions[x, y] = BoardOptions.NoBombUncovered;
+
+                foreach(var (xDistance, yDistance) in SurroundingPointVectors)
+                {
+                    if(((y + yDistance) >= 0) && ((x + xDistance) >= 0) 
+                        && ((y + yDistance) < maxY) && ((x + xDistance) < maxX)
+                        && (board.BoardOptions[x + xDistance, y + yDistance] == BoardOptions.NoBombCovered))
+                    {
+                        if(board.NumberOfSurroundingBombs[x + xDistance, y + yDistance] == 0)
+                            positionsToCheck.Enqueue((x + xDistance, y + yDistance));
+                        else
+                            board.BoardOptions[x + xDistance, y + yDistance] = BoardOptions.NoBombUncovered;
+                    }
+                }
             }
         }
 
@@ -291,26 +260,17 @@ namespace MineFind
                 for(y = 0; y < maxY; ++y)
                 {
                     if(board.BoardOptions[x, y] == BoardOptions.Uninitialized)
-                    {
                         board.BoardOptions[x, y] = BoardOptions.NoBombCovered;
-                    }
 
-                    if(((y - 1) >= 0) && ((x - 1) >= 0) && (board.BoardOptions[x - 1, y - 1] == BoardOptions.BombCovered))
-                        ++board.NumberOfSurroundingBombs[x, y];
-                    if(((y - 1) >= 0) && (board.BoardOptions[x, y - 1] == BoardOptions.BombCovered))
-                        ++board.NumberOfSurroundingBombs[x, y];
-                    if(((y - 1) >= 0) && ((x + 1) < maxX) && (board.BoardOptions[x + 1, y - 1] == BoardOptions.BombCovered))
-                        ++board.NumberOfSurroundingBombs[x, y];
-                    if(((x + 1) < maxX) && (board.BoardOptions[x + 1, y] == BoardOptions.BombCovered))
-                        ++board.NumberOfSurroundingBombs[x, y];
-                    if(((y + 1) < maxY) && ((x + 1) < maxX) && (board.BoardOptions[x + 1, y + 1] == BoardOptions.BombCovered))
-                        ++board.NumberOfSurroundingBombs[x, y];
-                    if(((y + 1) < maxY) && (board.BoardOptions[x, y + 1] == BoardOptions.BombCovered))
-                        ++board.NumberOfSurroundingBombs[x, y];
-                    if(((y + 1) < maxY) && ((x - 1) >= 0) && (board.BoardOptions[x - 1, y + 1] == BoardOptions.BombCovered))
-                        ++board.NumberOfSurroundingBombs[x, y];
-                    if(((x - 1) >= 0) && (board.BoardOptions[x - 1, y] == BoardOptions.BombCovered))
-                        ++board.NumberOfSurroundingBombs[x, y];
+                    foreach(var (xDistance, yDistance) in SurroundingPointVectors)
+                    {
+                        if(((y + yDistance) >= 0) && ((x + xDistance) >= 0)
+                            && ((y + yDistance) < maxY) && ((x + xDistance) < maxX)
+                            && (board.BoardOptions[x + xDistance, y + yDistance] == BoardOptions.BombCovered))
+                        {
+                            ++board.NumberOfSurroundingBombs[x, y];
+                        }
+                    }
                 }
             }
         }
