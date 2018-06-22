@@ -32,18 +32,18 @@ namespace MineFind
             while(continuePlaying)
             {
                 Console.WriteLine();
-                Console.Write("Enter an x dimension for the board and press ENTER: ");
+                Console.Write("Enter the number of rows for the board and press ENTER: ");
                 if(!int.TryParse(Console.ReadLine(), out var x))
                 {
-                    Console.WriteLine("\nInvalid x number was entered.");
+                    Console.WriteLine("\nInvalid number was entered.");
                     Console.ReadKey();
                     return;
                 }
 
-                Console.Write("Enter a y dimension for the board and press ENTER: ");
+                Console.Write("Enter the number of columns for the board and press ENTER: ");
                 if(!int.TryParse(Console.ReadLine(), out var y))
                 {
-                    Console.WriteLine("\nInvalid y number was entered.");
+                    Console.WriteLine("\nInvalid number was entered.");
                     Console.ReadKey();
                     return;
                 }
