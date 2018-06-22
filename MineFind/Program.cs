@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace MineFind
 {
-    public enum BoardOptions
+    public enum PointOptions
     {
         Uninitialized = 0,
         BombCovered,
@@ -14,7 +14,7 @@ namespace MineFind
 
     public struct Board
     {
-        public BoardOptions[,] BoardOptions { get; set; }
+        public PointOptions[,] PointStatuses { get; set; }
         public int[,] NumberOfSurroundingBombs { get; set; }
     }
 
@@ -65,7 +65,7 @@ namespace MineFind
 
                 var board = new Board
                 {
-                    BoardOptions = new BoardOptions[x, y],
+                    PointStatuses = new PointOptions[x, y],
                     NumberOfSurroundingBombs = new int[x, y]
                 };
 
@@ -86,16 +86,16 @@ namespace MineFind
                         return;
                     }
 
-                    switch(board.BoardOptions[xMove, yMove])
+                    switch(board.PointStatuses[xMove, yMove])
                     {
-                        case BoardOptions.NoBombUncovered:
+                        case PointOptions.NoBombUncovered:
                             /* This is a no-op, since it was already revealed to not have a bomb. */
                             break;
-                        case BoardOptions.BombCovered:
+                        case PointOptions.BombCovered:
                             /* Game over */
                             bombHit = true;
                             break;
-                        case BoardOptions.NoBombCovered:
+                        case PointOptions.NoBombCovered:
                             UncoverNoBombSpots(board, xMove, yMove);
                             break;
                     }
@@ -117,14 +117,14 @@ namespace MineFind
 
         private static bool IsGameWon(Board board)
         {
-            var xDimension = board.BoardOptions.GetLength(0);
-            var yDimension = board.BoardOptions.GetLength(1);
+            var xDimension = board.PointStatuses.GetLength(0);
+            var yDimension = board.PointStatuses.GetLength(1);
 
             for(var x = 0; x < xDimension; ++x)
             {
                 for(var y = 0; y < yDimension; ++y)
                 {
-                    if(board.BoardOptions[x, y] == BoardOptions.NoBombCovered)
+                    if(board.PointStatuses[x, y] == PointOptions.NoBombCovered)
                         return false;
                 }
             }
@@ -137,24 +137,24 @@ namespace MineFind
             /* 
              *  Uncover all of the covered no bomb spots starting at (x, y), assuming that (x, y) is a NoBombCovered spot. 
              */
-            var maxX = board.BoardOptions.GetLength(0);
-            var maxY = board.BoardOptions.GetLength(1);
+            var maxX = board.PointStatuses.GetLength(0);
+            var maxY = board.PointStatuses.GetLength(1);
             var noBombPositionsToCheck = new Queue<(int x, int y)>();
 
             noBombPositionsToCheck.Enqueue((x, y));
-            
+            board.PointStatuses[x, y] = PointOptions.NoBombUncovered;
+
             while(noBombPositionsToCheck.Count > 0)
             {
                 (x, y) = noBombPositionsToCheck.Dequeue();
-                board.BoardOptions[x, y] = BoardOptions.NoBombUncovered;
 
                 foreach(var (xDistance, yDistance) in SurroundingPointVectors)
                 {
                     if(((y + yDistance) >= 0) && ((x + xDistance) >= 0) 
                         && ((y + yDistance) < maxY) && ((x + xDistance) < maxX)
-                        && (board.BoardOptions[x + xDistance, y + yDistance] == BoardOptions.NoBombCovered))
+                        && (board.PointStatuses[x + xDistance, y + yDistance] == PointOptions.NoBombCovered))
                     {
-                        board.BoardOptions[x + xDistance, y + yDistance] = BoardOptions.NoBombUncovered;
+                        board.PointStatuses[x + xDistance, y + yDistance] = PointOptions.NoBombUncovered;
                         if(board.NumberOfSurroundingBombs[x + xDistance, y + yDistance] == 0)
                             noBombPositionsToCheck.Enqueue((x + xDistance, y + yDistance));
                     }
@@ -164,8 +164,8 @@ namespace MineFind
 
         private static void DrawBoard(Board board, bool uncoverEverything = false)
         {
-            var maxX = board.BoardOptions.GetLength(0);
-            var maxY = board.BoardOptions.GetLength(1);
+            var maxX = board.PointStatuses.GetLength(0);
+            var maxY = board.PointStatuses.GetLength(1);
 
             Console.Write(" ");
             for(var y = 0; y < maxY; ++y)
@@ -181,13 +181,13 @@ namespace MineFind
                 Console.Write(x);
                 for(var y = 0; y < maxY; ++y)
                 {
-                    switch(board.BoardOptions[x, y])
+                    switch(board.PointStatuses[x, y])
                     {
-                        case BoardOptions.Uninitialized:
+                        case PointOptions.Uninitialized:
                             Console.ForegroundColor = ConsoleColor.Blue;
                             Console.Write("X");
                             break;
-                        case BoardOptions.BombCovered:
+                        case PointOptions.BombCovered:
                             if(uncoverEverything)
                             {
                                 Console.ForegroundColor = ConsoleColor.DarkRed;
@@ -199,7 +199,7 @@ namespace MineFind
                                 Console.Write("X");
                             }
                             break;
-                        case BoardOptions.NoBombCovered:
+                        case PointOptions.NoBombCovered:
                             if(uncoverEverything)
                             {
                                 Console.ForegroundColor = ConsoleColor.DarkGreen;
@@ -211,7 +211,7 @@ namespace MineFind
                                 Console.Write("X");
                             }
                             break;
-                        case BoardOptions.NoBombUncovered:
+                        case PointOptions.NoBombUncovered:
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.Write(board.NumberOfSurroundingBombs[x, y] + "");
                             break;
@@ -228,8 +228,8 @@ namespace MineFind
         {
             var x = 0;
             var y = 0;
-            var maxX = board.BoardOptions.GetLength(0);
-            var maxY = board.BoardOptions.GetLength(1);
+            var maxX = board.PointStatuses.GetLength(0);
+            var maxY = board.PointStatuses.GetLength(1);
 
             var randomCoordinateIx = -1;
             var random = new Random(Guid.NewGuid().GetHashCode());
@@ -247,9 +247,9 @@ namespace MineFind
                 (x, y) = coordinates[randomCoordinateIx];
                 coordinates.RemoveAt(randomCoordinateIx);
 
-                if(board.BoardOptions[x, y] == BoardOptions.Uninitialized)
+                if(board.PointStatuses[x, y] == PointOptions.Uninitialized)
                 {
-                    board.BoardOptions[x, y] = BoardOptions.BombCovered;
+                    board.PointStatuses[x, y] = PointOptions.BombCovered;
                     --numberOfBombs;
                 }
             }
@@ -258,14 +258,14 @@ namespace MineFind
             {
                 for(y = 0; y < maxY; ++y)
                 {
-                    if(board.BoardOptions[x, y] == BoardOptions.Uninitialized)
-                        board.BoardOptions[x, y] = BoardOptions.NoBombCovered;
+                    if(board.PointStatuses[x, y] == PointOptions.Uninitialized)
+                        board.PointStatuses[x, y] = PointOptions.NoBombCovered;
 
                     foreach(var (xDistance, yDistance) in SurroundingPointVectors)
                     {
                         if(((y + yDistance) >= 0) && ((x + xDistance) >= 0)
                             && ((y + yDistance) < maxY) && ((x + xDistance) < maxX)
-                            && (board.BoardOptions[x + xDistance, y + yDistance] == BoardOptions.BombCovered))
+                            && (board.PointStatuses[x + xDistance, y + yDistance] == PointOptions.BombCovered))
                         {
                             ++board.NumberOfSurroundingBombs[x, y];
                         }
