@@ -139,13 +139,13 @@ namespace MineFind
              */
             var maxX = board.BoardOptions.GetLength(0);
             var maxY = board.BoardOptions.GetLength(1);
-            var positionsToCheck = new Queue<(int x, int y)>();
+            var noBombPositionsToCheck = new Queue<(int x, int y)>();
 
-            positionsToCheck.Enqueue((x, y));
+            noBombPositionsToCheck.Enqueue((x, y));
             
-            while(positionsToCheck.Count > 0)
+            while(noBombPositionsToCheck.Count > 0)
             {
-                (x, y) = positionsToCheck.Dequeue();
+                (x, y) = noBombPositionsToCheck.Dequeue();
                 board.BoardOptions[x, y] = BoardOptions.NoBombUncovered;
 
                 foreach(var (xDistance, yDistance) in SurroundingPointVectors)
@@ -154,10 +154,9 @@ namespace MineFind
                         && ((y + yDistance) < maxY) && ((x + xDistance) < maxX)
                         && (board.BoardOptions[x + xDistance, y + yDistance] == BoardOptions.NoBombCovered))
                     {
+                        board.BoardOptions[x + xDistance, y + yDistance] = BoardOptions.NoBombUncovered;
                         if(board.NumberOfSurroundingBombs[x + xDistance, y + yDistance] == 0)
-                            positionsToCheck.Enqueue((x + xDistance, y + yDistance));
-                        else
-                            board.BoardOptions[x + xDistance, y + yDistance] = BoardOptions.NoBombUncovered;
+                            noBombPositionsToCheck.Enqueue((x + xDistance, y + yDistance));
                     }
                 }
             }
