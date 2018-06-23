@@ -4,6 +4,8 @@ using System.Linq;
 
 namespace MineFind
 {
+    public class GameFailedException: Exception { }
+
     public enum PointOptions
     {
         Uninitialized = 0,
@@ -31,87 +33,91 @@ namespace MineFind
 
             while(continuePlaying)
             {
-                Console.WriteLine();
-                Console.Write("Enter the number of rows for the board and press ENTER: ");
-                if(!int.TryParse(Console.ReadLine(), out var x))
+                try
                 {
-                    Console.WriteLine("\nInvalid number was entered.");
-                    Console.ReadKey();
-                    return;
-                }
-
-                Console.Write("Enter the number of columns for the board and press ENTER: ");
-                if(!int.TryParse(Console.ReadLine(), out var y))
-                {
-                    Console.WriteLine("\nInvalid number was entered.");
-                    Console.ReadKey();
-                    return;
-                }
-
-                Console.Write("Enter the number of bombs for the board and press ENTER: ");
-                if(!int.TryParse(Console.ReadLine(), out var numberOfBombs))
-                {
-                    Console.WriteLine("\nInvalid numberOfBombs number was entered.");
-                    Console.ReadKey();
-                    return;
-                }
-
-                if(numberOfBombs > (x * y))
-                {
-                    Console.WriteLine("Too many bombs for this board size.");
-                    Console.ReadKey();
-                    return;
-                }
-
-                var board = new Board
-                {
-                    PointStatuses = new PointOptions[x, y],
-                    NumberOfSurroundingBombs = new int[x, y]
-                };
-
-                InitializeBoard(board, numberOfBombs);
-
-                var bombHit = false;
-                var gameWon = false;
-
-                while(!bombHit && !gameWon)
-                {
-                    DrawBoard(board);
-                    Console.Write("Enter a position to uncover (row then column separated by a space: ");
-                    var move = Console.ReadLine().Split(' ');
-                    if((move.Length != 2) || !int.TryParse(move[0], out var xMove) || !int.TryParse(move[1], out var yMove))
+                    Console.WriteLine();
+                    Console.Write("Enter the number of rows for the board and press ENTER: ");
+                    if(!int.TryParse(Console.ReadLine(), out var x))
                     {
-                        Console.WriteLine("Invalid move. GAME OVER!!!");
-                        Console.ReadKey();
-                        return;
+                        Console.WriteLine("\nInvalid number was entered.");
+                        throw new GameFailedException();
                     }
 
-                    switch(board.PointStatuses[xMove, yMove])
+                    Console.Write("Enter the number of columns for the board and press ENTER: ");
+                    if(!int.TryParse(Console.ReadLine(), out var y))
                     {
-                        case PointOptions.NoBombUncovered:
-                            /* This is a no-op, since it was already revealed to not have a bomb. */
-                            break;
-                        case PointOptions.BombCovered:
-                            /* Game over */
-                            bombHit = true;
-                            break;
-                        case PointOptions.NoBombCovered:
-                            UncoverNoBombSpots(board, xMove, yMove);
-                            break;
+                        Console.WriteLine("\nInvalid number was entered.");
+                        throw new GameFailedException();
                     }
 
-                    gameWon = IsGameWon(board);
+                    Console.Write("Enter the number of bombs for the board and press ENTER: ");
+                    if(!int.TryParse(Console.ReadLine(), out var numberOfBombs))
+                    {
+                        Console.WriteLine("\nInvalid numberOfBombs number was entered.");
+                        throw new GameFailedException();
+                    }
+
+                    if(numberOfBombs > (x * y))
+                    {
+                        Console.WriteLine("Too many bombs for this board size.");
+                        throw new GameFailedException();
+                    }
+
+                    var board = new Board
+                    {
+                        PointStatuses = new PointOptions[x, y],
+                        NumberOfSurroundingBombs = new int[x, y]
+                    };
+
+                    InitializeBoard(board, numberOfBombs);
+
+                    var bombHit = false;
+                    var gameWon = false;
+
+                    while(!bombHit && !gameWon)
+                    {
+                        DrawBoard(board);
+                        Console.Write("Enter a position to uncover (row then column separated by a space: ");
+                        var move = Console.ReadLine().Split(' ');
+                        if((move.Length != 2) || !int.TryParse(move[0], out var xMove) || !int.TryParse(move[1], out var yMove))
+                        {
+                            Console.WriteLine("Invalid move.");
+                        }
+                        else
+                        {
+                            switch(board.PointStatuses[xMove, yMove])
+                            {
+                                case PointOptions.NoBombUncovered:
+                                    /* This is a no-op, since it was already revealed to not have a bomb. */
+                                    break;
+                                case PointOptions.BombCovered:
+                                    /* Game over */
+                                    bombHit = true;
+                                    break;
+                                case PointOptions.NoBombCovered:
+                                    UncoverNoBombSpots(board, xMove, yMove);
+                                    break;
+                            }
+
+                            gameWon = IsGameWon(board);
+                        }
+                    }
+
+                    if(bombHit)
+                        Console.WriteLine("You lose!!!");
+                    else
+                        Console.WriteLine("You win!!!");
+
+                    DrawBoard(board, true);
                 }
-
-                if(bombHit)
-                    Console.WriteLine("You lose!!!");
-                else
-                    Console.WriteLine("You win!!!");
-
-                DrawBoard(board, true);
-
-                Console.Write("Continue? (y/n)");
-                continuePlaying = Console.ReadLine().ToLower() == "y";
+                catch(GameFailedException)
+                {
+                }
+                finally
+                {
+                    Console.Write("Play again? (y/n)");
+                    continuePlaying = Console.ReadLine().ToLower() == "y";
+                }
             }
         }
 
